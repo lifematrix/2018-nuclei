@@ -99,8 +99,8 @@ def infer_test():
                     )
     net.load_weight("log/20180414/model.cpkt")
 
+    images_code = {}
     for i, (image_id, value) in enumerate(ds.items()):
-        break
         # image_part = value[0]['img']
         # mask = infer_part(net, image_part)
 
@@ -114,20 +114,29 @@ def infer_test():
         # plt.show()
 
         whole_image, whole_pred = infer_image(net, image_id, value)
-        fig, ax = plt.subplots(1, 3, sharex=True, sharey=True, figsize=(12,5))
-        ax[0].imshow(whole_image, aspect="auto")
-        ax[2].imshow(whole_pred, aspect="auto")
-        ax[0].set_title("Input")
-        ax[1].set_title("Ground truth")
-        ax[2].set_title("Prediction")
-        fig.tight_layout()
-        plt.show()
-
         code = encode_pred(whole_pred)
         logging.info("code: %s", code)
-
-        if i > 2: 
+        images_code[image_id] = code
+        if i > 10:
             break
+        # fig, ax = plt.subplots(1, 3, sharex=True, sharey=True, figsize=(12,5))
+        # ax[0].imshow(whole_image, aspect="auto")
+        # ax[2].imshow(whole_pred, aspect="auto")
+        # ax[0].set_title("Input")
+        # ax[1].set_title("Ground truth")
+        # ax[2].set_title("Prediction")
+        # fig.tight_layout()
+        # plt.show()
+
+
+    return images_code
+
+def write_subm(fname, images_code):
+    with open(fname, "w") as f:
+        f.write("ImageId,EncodedPixels\n")
+        for image_id, value in images_code:
+            f.write("%s,%s", image_id, " ".join([" ".join(x) for x in value]))
+
 
 def test_encode():
     whole_pred = np.array([[0,1,1,0],
@@ -140,5 +149,6 @@ def test_encode():
 
 if __name__ == "__main__":
     initlog()
-    test_encode()
-    # infer_test()
+    # test_encode()
+    images_code = infer_test()
+    write_subm("data/subm_20180415_01.csv", images_code)
