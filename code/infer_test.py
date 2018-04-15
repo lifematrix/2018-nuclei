@@ -117,8 +117,8 @@ def infer_test():
         code = encode_pred(whole_pred)
         logging.info("code: %s", code)
         images_code[image_id] = code
-        if i > 10:
-            break
+        # if i > 10:
+        #    break
         # fig, ax = plt.subplots(1, 3, sharex=True, sharey=True, figsize=(12,5))
         # ax[0].imshow(whole_image, aspect="auto")
         # ax[2].imshow(whole_pred, aspect="auto")
@@ -134,8 +134,23 @@ def infer_test():
 def write_subm(fname, images_code):
     with open(fname, "w") as f:
         f.write("ImageId,EncodedPixels\n")
+        images_code = sorted(images_code.items(), key=lambda x:x[0])
         for image_id, value in images_code:
-            f.write("%s,%s", image_id, " ".join([" ".join(x) for x in value]))
+            value = value[:5]
+            # value = np.array(value, dtype=np.int).flatten()
+            f.write("%s,%s\n" % (image_id, " ".join(["%d %d" % (x[0], x[1]) for x in value])))
+
+def test_write_sumb():
+    whole_pred = np.array([[0,1,1,0],
+                           [1,0,1,1],
+                           [1,0,1,1],
+                           [1,0,1,0]], dtype=np.bool)
+    code = encode_pred(whole_pred)
+    logging.info("code: %s", code)
+    images_code = {}
+    images_code['abcdf'] = code
+    write_subm("data/subm_20180415_01.csv", images_code)
+
 
 
 def test_encode():
@@ -149,6 +164,6 @@ def test_encode():
 
 if __name__ == "__main__":
     initlog()
-    # test_encode()
+    # test_write_sumb()
     images_code = infer_test()
     write_subm("data/subm_20180415_01.csv", images_code)
