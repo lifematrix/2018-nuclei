@@ -136,7 +136,6 @@ def write_subm(fname, images_code):
         f.write("ImageId,EncodedPixels\n")
         images_code = sorted(images_code.items(), key=lambda x:x[0])
         for image_id, value in images_code:
-            value = value[:5]
             # value = np.array(value, dtype=np.int).flatten()
             f.write("%s,%s\n" % (image_id, " ".join(["%d %d" % (x[0], x[1]) for x in value])))
 
