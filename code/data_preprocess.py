@@ -89,7 +89,7 @@ def do_trainset():
     with open(pkl_fname, "wb") as f:
         pickle.dump(ds, f, protocol=pickle.HIGHEST_PROTOCOL)
 
-def do_testset():
+def do_testset1():
     data_dir = "data/datasets/stage1_test"
     ds = get_dataset(data_dir, has_mask=False, n_samples=None, s=(128,128))
 
@@ -97,6 +97,14 @@ def do_testset():
     with open(pkl_fname, "wb") as f:
         pickle.dump(ds, f, protocol=pickle.HIGHEST_PROTOCOL)
 
+def do_testset2():
+    data_dir = "data/datasets/stage2_test"
+    ds = get_dataset(data_dir, has_mask=False, n_samples=None, s=(128,128))
+
+    pkl_fname = "data/preprocess/stage2_test_set.pkl"
+    with open(pkl_fname, "wb") as f:
+        pickle.dump(ds, f, protocol=pickle.HIGHEST_PROTOCOL)
+
 if __name__ == "__main__":
     initlog()
-    do_testset()
+    do_testset2()
