@@ -105,6 +105,19 @@ def do_testset2():
     with open(pkl_fname, "wb") as f:
         pickle.dump(ds, f, protocol=pickle.HIGHEST_PROTOCOL)
 
+def do_testset1_2():
+    data_dir = "data/datasets/stage1_test"
+    ds1 = get_dataset(data_dir, has_mask=False, n_samples=None, s=(128,128)) 
+
+    data_dir = "data/datasets/stage2_test"
+    ds2 = get_dataset(data_dir, has_mask=False, n_samples=None, s=(128,128))
+
+    ds2.update(ds1)
+    pkl_fname = "data/preprocess/stage1_2_test_set.pkl"
+    logging.info("ds2 items: #%d", len(ds2.keys()))
+    with open(pkl_fname, "wb") as f:
+        pickle.dump(ds2, f, protocol=pickle.HIGHEST_PROTOCOL)
+
 if __name__ == "__main__":
     initlog()
-    do_testset2()
+    do_testset1_2()
