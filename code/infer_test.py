@@ -48,12 +48,13 @@ def concat_parts(parts, poses, raw_shape):
 def infer_image(net, image_id, value):
     parts_pred = [ infer_part(net, x['img']) for x in value]
     whole_image = concat_parts([x['img'] for x in value], 
-                               [x['pose'] for x in value],
+                               [x['pos'] for x in value],
                                value[0]['raw_shape'])
     whole_pred = concat_parts(parts_pred, 
-                               [x['pose'] for x in value],
+                               [x['pos'] for x in value],
                                value[0]['raw_shape'])
-    reteturn whole_image, whole_pred
+
+    return whole_image, whole_pred
 
 
 def infer_test():
@@ -84,7 +85,7 @@ def infer_test():
         # fig.tight_layout()
         # plt.show()
 
-        whole_image, whole_pred = infer_image(new, image, value)
+        whole_image, whole_pred = infer_image(net, image_id, value)
         fig, ax = plt.subplots(1, 3, sharex=True, sharey=True, figsize=(12,5))
         ax[0].imshow(whole_image, aspect="auto")
         ax[2].imshow(whole_pred, aspect="auto")
