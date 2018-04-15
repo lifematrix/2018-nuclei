@@ -35,6 +35,25 @@ def infer_part(net, image_part):
 
     return crop_pred
 
+def concat_parts(parts, poses, raw_shape):
+    logging.info("poses: %s, raw_shape: %s", poses, raw_shape)
+    whole = np.zeros(raw_shape, dtype=parts[0].dtype)
+
+    for pos, part in zip(poses, parts):
+        whole[pos[0]:pos[0]+part.shape[0], pos[1]:pos[1]+part.shape[1]] = part
+
+    return whole
+
+
+def infer_image(net, image_id, value):
+    parts_pred = [ infer_part(net, x['img']) for x in value]
+    whole_image = concat_parts([x['img'] for x in value], 
+                               [x['pose'] for x in value],
+                               value[0]['raw_shape'])
+    whole_pred = concat_parts(parts_pred, 
+                               [x['pose'] for x in value],
+                               value[0]['raw_shape'])
+    reteturn whole_image, whole_pred
 
 
 def infer_test():
@@ -52,13 +71,23 @@ def infer_test():
                     )
     net.load_weight("log/20180414/model.cpkt")
 
-    for i, (image, value) in enumerate(ds.items()):
-        image_part = value[0]['img']
-        mask = infer_part(net, image_part)
+    for i, (image_id, value) in enumerate(ds.items()):
+        # image_part = value[0]['img']
+        # mask = infer_part(net, image_part)
 
+        # fig, ax = plt.subplots(1, 3, sharex=True, sharey=True, figsize=(12,5))
+        # ax[0].imshow(image_part, aspect="auto")
+        # ax[2].imshow(mask, aspect="auto")
+        # ax[0].set_title("Input")
+        # ax[1].set_title("Ground truth")
+        # ax[2].set_title("Prediction")
+        # fig.tight_layout()
+        # plt.show()
+
+        whole_image, whole_pred = infer_image(new, image, value)
         fig, ax = plt.subplots(1, 3, sharex=True, sharey=True, figsize=(12,5))
-        ax[0].imshow(image_part, aspect="auto")
-        ax[2].imshow(mask, aspect="auto")
+        ax[0].imshow(whole_image, aspect="auto")
+        ax[2].imshow(whole_pred, aspect="auto")
         ax[0].set_title("Input")
         ax[1].set_title("Ground truth")
         ax[2].set_title("Prediction")
