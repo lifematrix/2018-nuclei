@@ -86,7 +86,7 @@ def encode_pred(pred):
 
 def infer_test():
     LAYERS = 3
-    pkl_fname = "data/preprocess/stage1_test_set.pkl"
+    pkl_fname = "data/preprocess/stage1_2_test_set.pkl"
     with open(pkl_fname, "rb") as f:
         ds = pickle.load(f)
 
