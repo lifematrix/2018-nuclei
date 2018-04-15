@@ -79,9 +79,10 @@ def main():
                     cost_kwargs=dict(regularizer=0.001),
                     )
 
-    for i in range(5):
+    net.load_weight("log/20180414/model.cpkt")
+    for i in range(2):
         x_test, y_test = data_provider(1)
-        prediction = net.predict("log/20180414/model.cpkt", x_test)
+        prediction = net.infer(x_test)
         logging.info("%s, %s", x_test.shape, y_test.shape)
         mask = prediction[0,...,1] > 0.3
         img_cropped = crop_to_shape(x_test[0,...,0], mask.shape)
