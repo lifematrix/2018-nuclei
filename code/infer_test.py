@@ -64,16 +64,18 @@ def encode_pred(pred):
     for i, x in enumerate(pred):
         if flag == 0 and x == 0:
             continue
-        if flag == 0 and x == 1:
+        elif flag == 0 and x == 1:
             p[0] = i+1
             p[1] = 1 
             flag = 1
-        if flag == 1 and x == 1:
+        elif flag == 1 and x == 1:
             p[1] += 1
-        if flag == 1 and x == 0:
+        elif flag == 1 and x == 0:
             code.append(p)
             flag = 0
             p = [0, 0]
+        else:
+            pass
     if flag == 1:
         code.append(p)
 
@@ -98,6 +100,7 @@ def infer_test():
     net.load_weight("log/20180414/model.cpkt")
 
     for i, (image_id, value) in enumerate(ds.items()):
+        break
         # image_part = value[0]['img']
         # mask = infer_part(net, image_part)
 
@@ -126,14 +129,16 @@ def infer_test():
         if i > 2: 
             break
 
+def test_encode():
     whole_pred = np.array([[0,1,1,0],
                            [1,0,1,1],
                            [1,0,1,1],
-                           [1,0,1,1]], dtyp=np.bool)
+                           [1,0,1,0]], dtype=np.bool)
     code = encode_pred(whole_pred)
     logging.info("code: %s", code)
 
 
 if __name__ == "__main__":
     initlog()
-    infer_test()
+    test_encode()
+    # infer_test()
