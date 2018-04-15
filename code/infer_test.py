@@ -56,6 +56,31 @@ def infer_image(net, image_id, value):
 
     return whole_image, whole_pred
 
+def encode_pred(pred):
+    pred = np.transpose(pred).flatten()
+    code = []
+    flag = 0
+    p = [0, 0]
+    for i, x in enumerate(pred):
+        if flag == 0 and x == 0:
+            continue
+        if flag == 0 and x == 1:
+            p[0] = i+1
+            p[1] = 1 
+            flag = 1
+        if flag == 1 and x == 1:
+            p[1] += 1
+        if flag == 1 and x == 0:
+            code.append(p)
+            flag = 0
+            p = [0, 0]
+    if flag == 1:
+        code.append(p)
+
+    return code
+
+
+
 
 def infer_test():
     LAYERS = 3
@@ -95,9 +120,18 @@ def infer_test():
         fig.tight_layout()
         plt.show()
 
-        if i > 5:
+        code = encode_pred(whole_pred)
+        logging.info("code: %s", code)
+
+        if i > 2: 
             break
 
+    whole_pred = np.array([[0,1,1,0],
+                           [1,0,1,1],
+                           [1,0,1,1],
+                           [1,0,1,1]], dtyp=np.bool)
+    code = encode_pred(whole_pred)
+    logging.info("code: %s", code)
 
 
 if __name__ == "__main__":
