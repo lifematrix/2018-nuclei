@@ -4,4 +4,5 @@ data/
 prediction/
 .idea/
 train_set.pkl
+*.pyc
 

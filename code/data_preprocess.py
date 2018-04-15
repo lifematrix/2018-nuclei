@@ -41,7 +41,7 @@ def split_parts(img, mask, s=(256,256)):
         assert(img.shape[0] == mask.shape[0] and img.shape[1] == mask.shape[1])
 
     if img.shape[0] < s[0] or img.shape[1] < s[1]:
-        raise ValueError("image shape is less than %d" % s)
+        raise ValueError("image shape %s, is less than %s" % (img.shape, s))
 
     h_parts = calc_parts(img.shape[0], s[0])
     w_parts = calc_parts(img.shape[1], s[1])
@@ -56,14 +56,14 @@ def split_parts(img, mask, s=(256,256)):
             if mask is not None:
                 mask_parts.append(mask[h:h+s[0], w:w+s[1]])
             else:
-                mask_parts.appedn(None)
+                mask_parts.append(None)
             parts.append([h, w])
 
     return img_parts, mask_parts, parts
 
 
 
-def get_dataset(folder, has_mask=True, n_samples=None):
+def get_dataset(folder, has_mask=True, n_samples=None, s=(256,256)):
     imgs_folders = glob.glob(os.path.join(folder, "*"))[:n_samples]
     ds = {}
 
@@ -71,7 +71,7 @@ def get_dataset(folder, has_mask=True, n_samples=None):
     for i, f in enumerate(imgs_folders):
         img, mask = read_image_mask(f, has_mask)
         img = img[:, :, 0]    # for gray scale
-        img_parts, mask_parts, parts = split_parts(img, mask, (256,256))
+        img_parts, mask_parts, parts = split_parts(img, mask, s)
         data = [{'pos': x[2], 'img': x[0], 'mask': x[1], 'raw_shape': img.shape} for x in zip(img_parts, mask_parts, parts)]
         img_id = os.path.basename(f)
         ds[img_id] = data
@@ -91,7 +91,7 @@ def do_trainset():
 
 def do_testset():
     data_dir = "data/datasets/stage1_test"
-    ds = get_dataset(data_dir, has_mask=False, n_samples=None)
+    ds = get_dataset(data_dir, has_mask=False, n_samples=None, s=(128,128))
 
     pkl_fname = "data/preprocess/stage1_test_set.pkl"
     with open(pkl_fname, "wb") as f:

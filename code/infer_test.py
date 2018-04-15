@@ -18,28 +18,33 @@ from tf_unet import image_util
 from train import get_dataset, unet_size, padding_array
 
 def infer_part(net, image_part):
-	original_shape = image_part.shape
-	offset = 296 - image_part.shape[0]
-	image_part = np.reshape(image_part, (1,)+image_part.shape)
-	image_part_pad = padding_array(image_part, offset, default_val=0)
-	pred = net.infer(image_part_pad)
-	pred = pred[0,...,1]
-	pred = pred > 0.5
-	pred = crop_to_shape(pred, original_shape)
-	logging.info("original_shape: %s, pad.shape: %s, pred.shape: %s, crop_pred.shape: %s",
-		original_shape, image_part_pad.shape, pred.shape, crop_pred.shape)
+    original_shape = image_part.shape
+    offset = 296 - image_part.shape[0]
+    image_part = image_part/255.0
+    image_part = np.reshape(image_part, (1,)+image_part.shape)
+    image_part_pad = padding_array(image_part, offset, default_val=0)
+    image_part_pad = np.reshape(image_part_pad, image_part_pad.shape+(1,))
+    logging.info("original_shape: %s, pad.shape: %s",
+                 original_shape, image_part_pad.shape)
+    pred = net.infer(image_part_pad)
+    pred = pred[0,...,1]
+    pred = pred > 0.5
+    crop_pred = crop_to_shape(pred, original_shape)
+    logging.info("original_shape: %s, pad.shape: %s, pred.shape: %s, crop_pred.shape: %s",
+        original_shape, image_part_pad.shape, pred.shape, crop_pred.shape)
 
-	return pred
+    return crop_pred
 
 
 
 def infer_test():
-	pkl_fname = "data/preprocess/stage1_test_set.pkl"
+    LAYERS = 3
+    pkl_fname = "data/preprocess/stage1_test_set.pkl"
     with open(pkl_fname, "rb") as f:
         ds = pickle.load(f)
 
-    net = unet.Unet(channels=data_provider.channels,
-                    n_class=data_provider.n_class,
+    net = unet.Unet(channels=1,
+                    n_class=2,
                     cost='cross_entropy',
                     layers=LAYERS,
                     features_root=64,
@@ -47,11 +52,11 @@ def infer_test():
                     )
     net.load_weight("log/20180414/model.cpkt")
 
-    for image, value in ds.items():
-    	image_part = value[0]['img']
-    	mask = infer_part(image_part)
+    for i, (image, value) in enumerate(ds.items()):
+        image_part = value[0]['img']
+        mask = infer_part(net, image_part)
 
-    	fig, ax = plt.subplots(1, 2, sharex=True, sharey=True, figsize=(12,5))
+        fig, ax = plt.subplots(1, 3, sharex=True, sharey=True, figsize=(12,5))
         ax[0].imshow(image_part, aspect="auto")
         ax[2].imshow(mask, aspect="auto")
         ax[0].set_title("Input")
@@ -60,8 +65,11 @@ def infer_test():
         fig.tight_layout()
         plt.show()
 
+        if i > 5:
+            break
+
 
 
 if __name__ == "__main__":
     initlog()
-    main()
+    infer_test()
