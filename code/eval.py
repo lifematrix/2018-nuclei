@@ -55,7 +55,7 @@ def main():
     images = padding_array(images, offset, default_val=0.0)
     masks = padding_array(masks, offset, default_val=False)
     logging.info("shape after padded: %s, %s", images.shape, masks.shape)
-    pkl_fname = "data/preprocess/stage1_train_set_padding.pkl"
+	pkl_fname = "data/preprocess/stage1_train_set_padding.pkl"
     with open(pkl_fname, "wb") as f:
     	pickle((images, masks), f, protocol=pickle.HIGHEST_PROTOCOL)
 
