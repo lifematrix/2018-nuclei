@@ -1,0 +1,7 @@
+# Created by .ignore support plugin (hsz.mobi)
+log/
+data/
+prediction/
+.idea/
+train_set.pkl
+
