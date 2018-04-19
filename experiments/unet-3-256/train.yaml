@@ -1,0 +1,63 @@
+
+manager:
+  seed: 123456
+  session:
+    gpu:
+      visible_gpus: "0"
+      memory_faction: 0.8
+  log_dir:
+  init_checkpoint_file:
+  max_to_keep: 5
+  eval_per_epochs: 1
+  best_n: 3
+
+
+train:
+  data:
+    type: tfrecord
+    annotation: mask
+    source: data/tfrecords/256x256/train
+    n_readers: 8
+    batch_size: 4
+    shuffle:
+      buffer: 10
+      seed: 123456
+    prefetch: 50
+#    transform:
+#      image:
+#        - random_vertical: True
+#        - random_horizon: True
+    output: { image, label }
+  lr_policy:
+    type: Interval
+    params: "[[20, 0.01],[10,0.001],[10,0.0001],[10,0.00001]]"
+  optimizer:
+    Momentum: { momentum: 0.9, use_nesterov: True }
+  weight_decay: 0.0001
+  init_validate: False
+  metrics:
+    accuracy: { n: 1 }
+    loss:
+  verbose: True
+  debug: False
+  santiy_check_per_steps: 50
+  feed_dict:
+    is_training: True
+    keep_prob: 0.8
+
+
+
+validate:
+  data:
+    type: tfrecord
+    annotation: mask
+    source: data/tfrecords/256x256/val
+    n_readers: 2
+    batch_size: 4
+  metrics:
+    accuracy:
+  feed_dict:
+    is_training: False
+    is_training: True
+    keep_prob: 1.0
+

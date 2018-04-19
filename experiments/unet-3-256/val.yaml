@@ -1,0 +1,36 @@
+
+manager:
+  seed: 12345678
+  session:
+    gpu:
+      visible_gpus: "2,3"
+      memory_faction: 0.95
+  log_dir:
+  init_checkpoint_file:
+  max_to_keep: 20
+
+
+validate:
+  data:
+    type: tfrecord
+    source: data/1120/tfrecord/test
+#    type: list
+#    source: data/1120/list/val.txt
+#    data_dir: data/images/original/train
+#    converter: DrConverter(800)
+    n_readers: 20
+    batch_size: 16
+    need_image_id: True
+    # first_n: 80
+  metrics:
+    accuracy:
+    kappa:
+  feed_dict:
+    is_training: False
+    first_keep_prob: 1.0
+    second_keep_prob: 1.0
+  output:
+    - infer: results/20180313_1120_scores.pkl
+    # - infer: results/20180313_1120_scores.txt
+
+

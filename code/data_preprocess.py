@@ -11,7 +11,10 @@ import cPickle as pickle
 
 def read_image_mask(img_folder, has_mask=True):
     img_fname = glob.glob(os.path.join(img_folder, "images", "*.png"))[0]
+    # img = cv2.imread(img_fname, cv2.IMREAD_GRAYSCALE)
     img = cv2.imread(img_fname)
+    if len(img.shape) == 1:
+        img = np.dstack((img,img,img))
 
     if has_mask:
         mask_fnames = glob.glob(os.path.join(img_folder, "masks", "*.png"))
@@ -70,7 +73,6 @@ def get_dataset(folder, has_mask=True, n_samples=None, s=(256,256)):
     k = 0
     for i, f in enumerate(imgs_folders):
         img, mask = read_image_mask(f, has_mask)
-        img = img[:, :, 0]    # for gray scale
         img_parts, mask_parts, parts = split_parts(img, mask, s)
         data = [{'pos': x[2], 'img': x[0], 'mask': x[1], 'raw_shape': img.shape} for x in zip(img_parts, mask_parts, parts)]
         img_id = os.path.basename(f)
@@ -83,9 +85,9 @@ def get_dataset(folder, has_mask=True, n_samples=None, s=(256,256)):
 
 def do_trainset():
     data_dir = "data/datasets/stage1_train"
-    ds = get_dataset(data_dir, n_samples=None)
+    ds = get_dataset(data_dir, n_samples=None, s=(256,256))
 
-    pkl_fname = "data/preprocess/stage1_train_set.pkl"
+    pkl_fname = "data/preprocess/stage1_train_set_rgb.pkl"
     with open(pkl_fname, "wb") as f:
         pickle.dump(ds, f, protocol=pickle.HIGHEST_PROTOCOL)
 
@@ -113,11 +115,12 @@ def do_testset1_2():
     ds2 = get_dataset(data_dir, has_mask=False, n_samples=None, s=(128,128))
 
     ds2.update(ds1)
-    pkl_fname = "data/preprocess/stage1_2_test_set.pkl"
+    pkl_fname = "data/preprocess/stage1_2_test_set_rgb.pkl"
     logging.info("ds2 items: #%d", len(ds2.keys()))
     with open(pkl_fname, "wb") as f:
         pickle.dump(ds2, f, protocol=pickle.HIGHEST_PROTOCOL)
 
 if __name__ == "__main__":
     initlog()
+    do_trainset()
     do_testset1_2()

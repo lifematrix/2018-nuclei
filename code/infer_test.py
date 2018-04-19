@@ -16,6 +16,7 @@ from tf_unet import unet
 from tf_unet import util
 from tf_unet import image_util
 from train import get_dataset, unet_size, padding_array
+import skimage.morphology
 
 def infer_part(net, image_part):
     original_shape = image_part.shape
@@ -26,14 +27,14 @@ def infer_part(net, image_part):
     image_part_pad = np.reshape(image_part_pad, image_part_pad.shape+(1,))
     logging.info("original_shape: %s, pad.shape: %s",
                  original_shape, image_part_pad.shape)
-    pred = net.infer(image_part_pad)
-    pred = pred[0,...,1]
-    pred = pred > 0.5
-    crop_pred = crop_to_shape(pred, original_shape)
+    prob = net.infer(image_part_pad)
+    prob = prob[0,...,1]
+    # pred = pred > 0.5
+    crop_prob = crop_to_shape(prob, original_shape)
     logging.info("original_shape: %s, pad.shape: %s, pred.shape: %s, crop_pred.shape: %s",
-        original_shape, image_part_pad.shape, pred.shape, crop_pred.shape)
+        original_shape, image_part_pad.shape, prob.shape, crop_prob.shape)
 
-    return crop_pred
+    return crop_prob
 
 def concat_parts(parts, poses, raw_shape):
     logging.info("poses: %s, raw_shape: %s", poses, raw_shape)
@@ -55,6 +56,40 @@ def infer_image(net, image_id, value):
                                value[0]['raw_shape'])
 
     return whole_image, whole_pred
+
+#RLE encoding for submission
+def rle_encoding(x):
+    dots = np.where(x.T.flatten() == 1)[0]
+    run_lengths = []
+    prev = -2
+    for b in dots:
+        if (b>prev+1): run_lengths.extend((b + 1, 0))
+        run_lengths[-1] += 1
+        prev = b
+    return run_lengths
+
+
+kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
+
+def apply_morphology(mask):
+    mask = (mask*255).astype(np.uint8)
+    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+    # mask = cv2.dilate(thresh, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5)))
+    # mask = cv2.erode(mask, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5)))
+    mask = (mask == 255)
+    return mask
+
+def prob_to_rles(x, cutoff=0.5):
+    mask = x > cutoff
+    mask = apply_morphology(mask)
+    lab_img = skimage.morphology.label(mask)
+    encodes = []
+    for i in range(1, lab_img.max() + 1):
+        # yield rle_encoding(lab_img == i)
+        encodes.append(rle_encoding(lab_img == i))
+    return encodes
+
 
 def encode_pred(pred):
     pred = np.transpose(pred).flatten()
@@ -97,28 +132,34 @@ def infer_test():
                     features_root=64,
                     cost_kwargs=dict(regularizer=0.001),
                     )
-    net.load_weight("log/20180414/model.cpkt")
+    net.load_weight("log/20180416/model.cpkt")
 
     images_code = {}
     for i, (image_id, value) in enumerate(ds.items()):
         # image_part = value[0]['img']
-        # mask = infer_part(net, image_part)
-
+        # prob = infer_part(net, image_part)
+        #
+        # mask = prob > 0.5
+        # mask_ex = apply_morphology(mask)
         # fig, ax = plt.subplots(1, 3, sharex=True, sharey=True, figsize=(12,5))
         # ax[0].imshow(image_part, aspect="auto")
+        # ax[1].imshow(mask_ex, aspect="auto")
         # ax[2].imshow(mask, aspect="auto")
         # ax[0].set_title("Input")
         # ax[1].set_title("Ground truth")
         # ax[2].set_title("Prediction")
         # fig.tight_layout()
         # plt.show()
+        # if i > 3:
+        #     break
 
-        whole_image, whole_pred = infer_image(net, image_id, value)
-        code = encode_pred(whole_pred)
+        whole_image, whole_prob = infer_image(net, image_id, value)
+        code = prob_to_rles(whole_prob)
         logging.info("code: %s", code)
         images_code[image_id] = code
-        # if i > 10:
-        #    break
+        # if i > 5:
+        #     break
+
         # fig, ax = plt.subplots(1, 3, sharex=True, sharey=True, figsize=(12,5))
         # ax[0].imshow(whole_image, aspect="auto")
         # ax[2].imshow(whole_pred, aspect="auto")
@@ -135,9 +176,10 @@ def write_subm(fname, images_code):
     with open(fname, "w") as f:
         f.write("ImageId,EncodedPixels\n")
         images_code = sorted(images_code.items(), key=lambda x:x[0])
-        for image_id, value in images_code:
+        for image_id, codes in images_code:
             # value = np.array(value, dtype=np.int).flatten()
-            f.write("%s,%s\n" % (image_id, " ".join(["%d %d" % (x[0], x[1]) for x in value])))
+            for code in codes:
+                f.write("%s,%s\n" % (image_id, " ".join(["%d" % x for x in code])))
 
 def test_write_sumb():
     whole_pred = np.array([[0,1,1,0],
@@ -165,4 +207,4 @@ if __name__ == "__main__":
     initlog()
     # test_write_sumb()
     images_code = infer_test()
-    write_subm("data/subm_20180415_01.csv", images_code)
+    write_subm("data/subm_20180416_01.csv", images_code)
